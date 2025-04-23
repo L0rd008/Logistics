@@ -35,8 +35,8 @@
 ### 1. ✅ Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/your-logistics-project.git
-cd your-logistics-project
+git clone https://github.com/IASSCMS/Logistics.git
+cd Logistics
 ```
 
 ---
