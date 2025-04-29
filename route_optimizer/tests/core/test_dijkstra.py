@@ -103,48 +103,48 @@ class TestDijkstraPathFinder(unittest.TestCase):
 
     def test_all_shortest_paths(self):
         """Test calculating all shortest paths between nodes."""
-        nodes = ['A', 'B', 'C']
+        nodes = ['A', 'B', 'C', 'D', 'E'] 
         all_paths = self.path_finder.calculate_all_shortest_paths(self.simple_graph, nodes)
-        
-        # Verify the structure of the result
-        self.assertIn('A', all_paths)
-        self.assertIn('B', all_paths)
-        self.assertIn('C', all_paths)
-        self.assertIn('B', all_paths['A'])
-        self.assertIn('C', all_paths['A'])
-        
-        # Check specific paths
-        self.assertEqual(all_paths['A']['B']['path'], ['A', 'B'])
-        self.assertEqual(all_paths['A']['B']['distance'], 1.0)
+
+        # Structure checks
+        for start in nodes:
+            for end in nodes:
+                self.assertIn(end, all_paths[start])
+
+        # Shortest path from A to C: A → B → C
         self.assertEqual(all_paths['A']['C']['path'], ['A', 'B', 'C'])
         self.assertEqual(all_paths['A']['C']['distance'], 3.0)
-        self.assertEqual(all_paths['B']['C']['path'], ['B', 'C'])
-        self.assertEqual(all_paths['B']['C']['distance'], 2.0)
-        
-        # No path from C to A or B
-        self.assertIsNone(all_paths['C']['A']['path'])
-        self.assertIsNone(all_paths['C']['A']['distance'])
-        self.assertIsNone(all_paths['C']['B']['path'])
-        self.assertIsNone(all_paths['C']['B']['distance'])
 
-    def test_negative_weights(self):
-        """Test behavior with negative weights (not supported by standard Dijkstra)."""
+        # Shortest path from A to E: A → B → E (1 + 3 = 4.0)
+        self.assertEqual(all_paths['A']['E']['path'], ['A', 'B', 'E'])
+        self.assertEqual(all_paths['A']['E']['distance'], 4.0)
+
+        # Shortest path from D to E: D → E
+        self.assertEqual(all_paths['D']['E']['path'], ['D', 'E'])
+        self.assertEqual(all_paths['D']['E']['distance'], 5.0)
+
+        # Path from E to any node is impossible (E has no outbound edges)
+        for target in ['A', 'B', 'C', 'D']:
+            self.assertIsNone(all_paths['E'][target]['path'])
+            self.assertEqual(all_paths['E'][target]['distance'], float('inf'))
+
+        # Self-paths
+        for node in nodes:
+            self.assertEqual(all_paths[node][node]['path'], [node])
+            self.assertEqual(all_paths[node][node]['distance'], 0)
+
+
+    def test_negative_weights_error(self):
+        """Test that Dijkstra raises an error when negative weights are present."""
         graph_with_negative = {
             'A': {'B': 1.0, 'C': 4.0},
             'B': {'C': -2.0}  # Negative weight
         }
+
+        with self.assertRaises(ValueError) as context:
+            self.path_finder.calculate_shortest_path(graph_with_negative, 'A', 'C')
         
-        # The implementation should handle this by ignoring negative weights
-        # or by returning a correct path based on the algorithm's behavior
-        path, distance = self.path_finder.calculate_shortest_path(
-            graph_with_negative, 'A', 'C'
-        )
-        # We expect either:
-        # 1. A direct path from A to C with distance 4.0, or
-        # 2. A path through B: A -> B -> C with distance -1.0 (if negative weights are allowed)
-        # Since Dijkstra's doesn't handle negative weights correctly, we expect the first case
-        self.assertEqual(path, ['A', 'C'])
-        self.assertEqual(distance, 4.0)
+        self.assertIn('Negative weight detected', str(context.exception))
 
 
 if __name__ == '__main__':
