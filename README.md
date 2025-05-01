@@ -93,4 +93,3 @@ http://127.0.0.1:8000/swagger/
 
 You’ll see an interactive **Swagger UI** listing all available API endpoints (e.g., `/api/fleet/vehicles/`).
 
----
