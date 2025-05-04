@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'fleet',
     'assignment',
     'monitoring',
+    'shipments',
     'drf_yasg',
     'route_optimizer',
 ]

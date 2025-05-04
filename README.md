@@ -30,6 +30,13 @@
   - Captures logs, alerts, failed deliveries, delays
   - Optional dashboard with charts and status
   - Could connect with Kafka or DB log events from assignment
+- shipments/ (Django app) 
+  - Models: Shipment (order_id, origin, destination, status)
+  - Status Lifecycle: pending → scheduled → dispatched → in_transit → delivered/failed
+  - APIs: Create shipment, update status, track delivery progress
+  - Decoupled from Warehouse via primitive IDs (warehouse_id)
+  - Triggered by Order events (async/REST), manages physical movement of goods
+
 ---
 # Getting Started
 ### 1. ✅ Clone the Repository
