@@ -11,7 +11,13 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from datetime import datetime, timedelta
 
-from fleet.models import Vehicle, VehicleLocation, MaintenanceRecord
+from fleet.models import Vehicle, VehicleLocation
+
+from django.conf import settings
+
+if settings.ENABLE_FLEET_EXTENDED_MODELS:
+    from fleet.models import MaintenanceRecord
+
 from fleet.serializers import VehicleSerializer, VehicleDetailSerializer
 
 
