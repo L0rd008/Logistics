@@ -69,8 +69,6 @@ class Vehicle(models.Model):
         return (timezone.now() - self.last_location_update).total_seconds() > 1800  # 30 minutes
 
     class Meta:
-        ordering = ['-timestamp']
-        verbose_name_plural = "Vehicle Locations"
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['vehicle_id']),
@@ -89,3 +87,7 @@ class VehicleLocation(models.Model):
 
     def __str__(self):
         return f"{self.vehicle.vehicle_id} - {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name_plural = "Vehicle Locations"
