@@ -28,5 +28,5 @@ class KafkaE2ETest(TestCase):
 
         # Now assert
         shipment = Shipment.objects.filter(order_id=order_id).first()
-        print("DEBUG:", shipment)
+        self.logger.debug("Shipment: %s", shipment)
         self.assertIsNotNone(shipment, f"Shipment for {order_id} should exist")
