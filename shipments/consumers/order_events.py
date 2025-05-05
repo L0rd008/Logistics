@@ -46,3 +46,12 @@ def start_order_consumer():
         print("Kafka consumer stopped")
     finally:
         consumer.close()
+
+def run_consumer_once():
+    consumer = create_kafka_consumer()
+    consumer.subscribe(['orders.created'])
+    msg = consumer.poll(timeout=5.0)
+    if msg and not msg.error():
+        event = json.loads(msg.value().decode('utf-8'))
+        handle_order_created(event)
+    consumer.close()
