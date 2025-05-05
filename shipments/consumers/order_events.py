@@ -1,4 +1,5 @@
 import json
+import logging
 from confluent_kafka import Consumer, KafkaException
 from django.conf import settings
 from shipments.models import Shipment
