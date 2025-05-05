@@ -1,9 +1,12 @@
 import json
+import logging
 from django.test import TestCase
 from shipments.models import Shipment
 from confluent_kafka import Producer
 
 from shipments.consumers.order_events import run_consumer_once
+
+logger = logging.getLogger(__name__)
 
 class KafkaE2ETest(TestCase):
     @classmethod
@@ -28,5 +31,5 @@ class KafkaE2ETest(TestCase):
 
         # Now assert
         shipment = Shipment.objects.filter(order_id=order_id).first()
-        self.logger.debug("Shipment: %s", shipment)
+        logger.debug("Shipment: %s", shipment)
         self.assertIsNotNone(shipment, f"Shipment for {order_id} should exist")
