@@ -1,0 +1,48 @@
+import json
+from confluent_kafka import Consumer, KafkaException
+from django.conf import settings
+from shipments.models import Shipment
+import uuid
+
+def create_kafka_consumer():
+    return Consumer({
+        'bootstrap.servers': settings.KAFKA_BROKER_URL,
+        'group.id': 'shipment_consumer_group',
+        'auto.offset.reset': 'earliest',
+    })
+
+def handle_order_created(event):
+    order_id = event.get("order_id")
+    origin = event.get("origin_warehouse_id")
+    destination = event.get("destination_warehouse_id")
+
+    if order_id and origin and destination:
+        Shipment.objects.create(
+            shipment_id=str(uuid.uuid4())[:12],
+            order_id=order_id,
+            origin_warehouse_id=origin,
+            destination_warehouse_id=destination,
+            status='pending'
+        )
+        print(f"Shipment created for order {order_id}")
+    else:
+        print("Invalid order event payload")
+
+def start_order_consumer():
+    consumer = create_kafka_consumer()
+    consumer.subscribe(['orders.created'])
+
+    try:
+        while True:
+            msg = consumer.poll(1.0)
+            if msg is None:
+                continue
+            if msg.error():
+                raise KafkaException(msg.error())
+
+            event = json.loads(msg.value().decode('utf-8'))
+            handle_order_created(event)
+    except KeyboardInterrupt:
+        print("Kafka consumer stopped")
+    finally:
+        consumer.close()
