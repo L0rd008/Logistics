@@ -130,3 +130,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # TODO: move this to environment
 ENABLE_FLEET_EXTENDED_MODELS = False
+
+# kafka settings
+KAFKA_BROKER_URL = "localhost:9092"
