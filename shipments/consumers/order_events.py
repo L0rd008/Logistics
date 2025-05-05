@@ -24,9 +24,9 @@ def handle_order_created(event):
             destination_warehouse_id=destination,
             status='pending'
         )
-        print(f"Shipment created for order {order_id}")
+        logging.info(f"Shipment created for order {order_id}")
     else:
-        print("Invalid order event payload")
+        logging.error("Invalid order event payload")
 
 def start_order_consumer():
     consumer = create_kafka_consumer()
