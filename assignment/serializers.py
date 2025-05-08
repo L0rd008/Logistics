@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Assignment
+
+from assignment.models.assignment import Assignment
+
 
 class AssignmentSerializer(serializers.ModelSerializer):
     class Meta:
