@@ -54,8 +54,8 @@ class TestVRPModel(unittest.TestCase):
         self.builder.add_vehicle(self.vehicle)
         self.builder.add_delivery_task(self.task1)
         vrp_input = VRPCompiler.compile(self.builder)
-        task = vrp_input.task_index_map[vrp_input.pickups_deliveries[0][0]]
-        self.assertEqual(task.id, "D1")
+        task_id = vrp_input.task_index_map[vrp_input.pickups_deliveries[0][0]][0]
+        self.assertEqual(task_id, "D1")
 
 
 if __name__ == "__main__":

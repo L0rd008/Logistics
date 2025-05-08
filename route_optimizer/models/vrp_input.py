@@ -35,7 +35,7 @@ class VRPInput:
     ends: List[int]
     vehicle_capacities: List[int]
     num_vehicles: int
-    task_index_map: Dict[int, DeliveryTask]
+    task_index_map: Dict[int, Tuple[str, str]]  # (task_id, "pickup"/"delivery")
     demands: List[int]
     time_limit: int = 30
     pickups_deliveries: List[Tuple[int, int]] = field(default_factory=list)
@@ -67,6 +67,8 @@ class VRPInputBuilder:
         self.location_labels: List[str] = []
 
     def _add_location(self, loc: Location, label: str) -> int:
+        if label in self.location_labels:
+            raise ValueError(f"Duplicate label detected: {label}")
         index = len(self.locations)
         self.locations.append(loc)
         self.location_labels.append(label)
@@ -93,29 +95,29 @@ class VRPInputBuilder:
 class VRPCompiler:
     @staticmethod
     def compile(builder: VRPInputBuilder) -> VRPInput:
-        location_index = {loc: i for i, loc in enumerate(builder.locations)}
         location_ids = builder.location_labels.copy()
+        label_to_index = {label: i for i, label in enumerate(location_ids)}
 
         demands = [0] * len(builder.locations)
         deliveries = []
-        task_index_map = {}
+        task_index_map: Dict[int, Tuple[str, str]] = {}
 
         for task in builder.tasks:
             pickup_label = f"{task.id}_pickup"
             delivery_label = f"{task.id}_delivery"
-            pickup_idx = location_ids.index(pickup_label)
-            delivery_idx = location_ids.index(delivery_label)
+            pickup_idx = label_to_index[pickup_label]
+            delivery_idx = label_to_index[delivery_label]
 
             demands[pickup_idx] += task.demand
             demands[delivery_idx] -= task.demand
             deliveries.append((pickup_idx, delivery_idx))
-            task_index_map[pickup_idx] = task
-            task_index_map[delivery_idx] = task
+            task_index_map[pickup_idx] = (task.id, "pickup")
+            task_index_map[delivery_idx] = (task.id, "delivery")
 
         starts, ends = [], []
         for v in builder.vehicles:
             depot_label = f"{v.id}_depot"
-            depot_idx = location_ids.index(depot_label)
+            depot_idx = label_to_index[depot_label]
             starts.append(depot_idx)
             ends.append(depot_idx)
 
