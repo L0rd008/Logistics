@@ -80,16 +80,11 @@ def solve_cvrp(vrp_input: VRPInput) -> Dict[str, Any]:
         "Capacity"
     )
 
-    # Allow dropping deliveries with penalty
-    penalty = 1000
-    for node in range(1, len(vrp_input.distance_matrix)):
-        routing.AddDisjunction([manager.NodeToIndex(node)], penalty)
-
     # Search parameters
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
-    search_parameters.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-    search_parameters.time_limit.FromSeconds(vrp_input.time_limit)
+    # search_parameters.time_limit.FromSeconds(vrp_input.time_limit)
+    search_parameters.solution_limit = 1
 
     solution = routing.SolveWithParameters(search_parameters)
 
@@ -112,22 +107,8 @@ def solve_cvrp(vrp_input: VRPInput) -> Dict[str, Any]:
         if len(route) > 2:
             routes.append(route)
 
-    # After the solution is found
-    dropped_locations = []
-    for node in range(len(vrp_input.distance_matrix)):
-        index = manager.NodeToIndex(node)
-        if routing.IsStart(index) or routing.IsEnd(index):
-            continue
-        if solution.Value(routing.NextVar(index)) == index:
-            dropped_locations.append({
-                "index": node,
-                "label": vrp_input.location_ids[node],
-                "task": vrp_input.task_index_map.get(node)
-            })
-
     return {
         "status": "success",
         "routes": routes,
         "total_distance": total_distance,
-        "dropped_locations": dropped_locations
     }

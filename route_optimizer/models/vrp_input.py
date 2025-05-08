@@ -37,7 +37,7 @@ class VRPInput:
     num_vehicles: int
     task_index_map: Dict[int, Tuple[str, str]]  # (task_id, "pickup"/"delivery")
     demands: List[int]
-    time_limit: int = 30
+    time_limit: int = 3
     pickups_deliveries: List[Tuple[int, int]] = field(default_factory=list)
     vehicles: List[Vehicle] = field(default_factory=list)
 
@@ -79,6 +79,7 @@ class VRPInputBuilder:
 
     def set_distance(self, from_index: int, to_index: int, distance: int):
         self.distance_matrix[from_index][to_index] = distance
+        self.distance_matrix[to_index][from_index] = distance
 
     def add_vehicle(self, vehicle: Vehicle):
         self._add_location(vehicle.depot, f"{vehicle.id}_depot")
