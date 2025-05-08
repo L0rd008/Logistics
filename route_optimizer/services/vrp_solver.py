@@ -83,7 +83,7 @@ def solve_cvrp(vrp_input: VRPInput) -> Dict[str, Any]:
     # Search parameters
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
-    # search_parameters.time_limit.FromSeconds(vrp_input.time_limit)
+    
     search_parameters.solution_limit = 1
 
     solution = routing.SolveWithParameters(search_parameters)
