@@ -19,23 +19,30 @@ def handle_order_created(event):
     order_id = event.get("order_id")
     origin = event.get("origin")  # Expecting {"lat": ..., "lng": ...}
     destination = event.get("destination")
+    demand = event.get("demand", 0)
 
+    # Basic validation
     if not (order_id and origin and destination):
-        logging.error("Invalid order event payload")
+        logging.error("Invalid order event payload: missing fields")
         return
 
     if not all(k in origin for k in ("lat", "lng")) or not all(k in destination for k in ("lat", "lng")):
         logging.error("Origin/destination must include lat/lng")
         return
 
+    if not isinstance(demand, int) or demand < 0:
+        logging.warning(f"Invalid or missing demand for order {order_id}. Defaulting to 0.")
+        demand = 0
+
     Shipment.objects.create(
         shipment_id=str(uuid.uuid4())[:12],
-        order_id=order_id,
+        order_id=str(order_id),
         origin=origin,
         destination=destination,
+        demand=demand,
         status='pending'
     )
-    logging.info(f"Shipment created for order {order_id}")
+    logging.info(f"Shipment created for order {order_id} with demand {demand}")
 
 
 def start_order_consumer():
