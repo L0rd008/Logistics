@@ -50,6 +50,8 @@ class VRPInput:
         n = len(self.location_ids)
         assert len(self.demands) == n, "Mismatch: demands vs location_ids"
         assert len(self.distance_matrix) == n, "Mismatch: matrix rows vs location_ids"
+        assert len(self.vehicles)  > 0, "No vehicles defined"
+        assert len(self.vehicles) == self.num_vehicles, "Mismatch: vehicles vs num_vehicles"
         assert all(len(row) == n for row in self.distance_matrix), "Matrix must be square"
         for v in self.vehicles:
             depot_index = self.location_id_to_index.get(f"{v.id}_depot")
