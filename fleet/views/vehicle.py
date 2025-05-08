@@ -1,6 +1,8 @@
 import os
 import django
 
+from fleet.services.status_services import mark_vehicle_assigned, mark_vehicle_available, update_vehicle_status
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'logistics_core.settings')
 django.setup()
 
@@ -58,8 +60,33 @@ class VehicleViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(status='available')
         if depot := params.get('depot_id'):
             queryset = queryset.filter(depot_id=depot)
-
+        queryset = queryset.order_by('-updated_at')
         return queryset
+
+    @action(detail=True, methods=['post'])
+    def mark_available(self, request, pk=None):
+        vehicle = self.get_object()
+        mark_vehicle_available(vehicle)
+        return Response({'vehicle_id': vehicle.vehicle_id, 'status': 'available'})
+
+    @action(detail=True, methods=['post'])
+    def mark_assigned(self, request, pk=None):
+        vehicle = self.get_object()
+        mark_vehicle_assigned(vehicle)
+        return Response({'vehicle_id': vehicle.vehicle_id, 'status': 'assigned'})
+
+    # Admin only
+    @action(detail=True, methods=['post'])
+    def change_status(self, request, pk=None):
+        vehicle = self.get_object()
+        new_status = request.data.get('status')
+
+        valid_statuses = dict(Vehicle.STATUS_CHOICES).keys()
+        if new_status not in valid_statuses:
+            return Response({'error': f'Invalid status. Must be one of {list(valid_statuses)}'}, status=400)
+
+        update_vehicle_status(vehicle, new_status)
+        return Response({'vehicle_id': vehicle.vehicle_id, 'status': new_status})
 
     @action(detail=True, methods=['post'])
     def update_location(self, request, pk=None):
@@ -84,38 +111,6 @@ class VehicleViewSet(viewsets.ModelViewSet):
             return Response({'status': 'location updated'}, status=200)
         except Exception as e:
             return Response({'error': str(e)}, status=400)
-
-    @action(detail=True, methods=['post'])
-    def change_status(self, request, pk=None):
-        vehicle = self.get_object()
-        new_status = request.data.get('status')
-
-        if not new_status:
-            return Response({'error': 'Status is required'}, status=400)
-
-        if new_status not in dict(Vehicle.STATUS_CHOICES):
-            return Response({'error': f'Invalid status: {new_status}'}, status=400)
-
-        if new_status == 'maintenance' and vehicle.status != 'maintenance' and settings.ENABLE_FLEET_EXTENDED_MODELS:
-            maintenance_type = request.data.get('maintenance_type', 'routine')
-            description = request.data.get('description', 'Routine maintenance')
-            scheduled_date = request.data.get('scheduled_date', timezone.now().date().isoformat())
-            try:
-                scheduled_date = datetime.fromisoformat(scheduled_date).date()
-            except ValueError:
-                scheduled_date = timezone.now().date()
-
-            MaintenanceRecord.objects.create(
-                vehicle=vehicle,
-                maintenance_type=maintenance_type,
-                description=description,
-                scheduled_date=scheduled_date,
-                status='in_progress'
-            )
-
-        vehicle.status = new_status
-        vehicle.save(update_fields=['status', 'updated_at'])
-        return Response(VehicleSerializer(vehicle).data)
 
     @action(detail=True, methods=['post'])
     def assign_depot(self, request, pk=None):
@@ -197,3 +192,36 @@ class VehicleViewSet(viewsets.ModelViewSet):
         ).order_by('depot_id')
 
         return Response({'by_depot': stats})
+
+    # # To be implemented with maintenance part
+    # @action(detail=True, methods=['post'])
+    # def change_status(self, request, pk=None):
+    #     vehicle = self.get_object()
+    #     new_status = request.data.get('status')
+    #
+    #     if not new_status:
+    #         return Response({'error': 'Status is required'}, status=400)
+    #
+    #     if new_status not in dict(Vehicle.STATUS_CHOICES):
+    #         return Response({'error': f'Invalid status: {new_status}'}, status=400)
+    #
+    #     if new_status == 'maintenance' and vehicle.status != 'maintenance' and settings.ENABLE_FLEET_EXTENDED_MODELS:
+    #         maintenance_type = request.data.get('maintenance_type', 'routine')
+    #         description = request.data.get('description', 'Routine maintenance')
+    #         scheduled_date = request.data.get('scheduled_date', timezone.now().date().isoformat())
+    #         try:
+    #             scheduled_date = datetime.fromisoformat(scheduled_date).date()
+    #         except ValueError:
+    #             scheduled_date = timezone.now().date()
+    #
+    #         MaintenanceRecord.objects.create(
+    #             vehicle=vehicle,
+    #             maintenance_type=maintenance_type,
+    #             description=description,
+    #             scheduled_date=scheduled_date,
+    #             status='in_progress'
+    #         )
+    #
+    #     vehicle.status = new_status
+    #     vehicle.save(update_fields=['status', 'updated_at'])
+    #     return Response(VehicleSerializer(vehicle).data)
