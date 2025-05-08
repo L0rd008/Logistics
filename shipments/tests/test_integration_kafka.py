@@ -3,7 +3,6 @@ import logging
 from django.test import TestCase
 from shipments.models import Shipment
 from confluent_kafka import Producer
-
 from shipments.consumers.order_events import run_consumer_once
 
 logger = logging.getLogger(__name__)
@@ -18,8 +17,8 @@ class KafkaE2ETest(TestCase):
         order_id = "KAFKA_E2E_01"
         event = {
             "order_id": order_id,
-            "origin_warehouse_id": "WH-X",
-            "destination_warehouse_id": "WH-Y"
+            "origin": {"lat": 6.9271, "lng": 79.8612},
+            "destination": {"lat": 7.2906, "lng": 80.6337}
         }
 
         # Send Kafka message
@@ -33,3 +32,6 @@ class KafkaE2ETest(TestCase):
         shipment = Shipment.objects.filter(order_id=order_id).first()
         logger.debug("Shipment: %s", shipment)
         self.assertIsNotNone(shipment, f"Shipment for {order_id} should exist")
+        self.assertEqual(shipment.origin, event["origin"])
+        self.assertEqual(shipment.destination, event["destination"])
+        self.assertEqual(shipment.status, "pending")

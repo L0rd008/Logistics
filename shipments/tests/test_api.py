@@ -6,22 +6,23 @@ from shipments.models import Shipment
 from datetime import timedelta
 from django.core.exceptions import ValidationError
 
+
 class ShipmentAPITestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.shipment = Shipment.objects.create(
             shipment_id="SHIP123",
             order_id="ORD456",
-            origin_warehouse_id="WH001",
-            destination_warehouse_id="WH002",
+            origin={"lat": 6.9271, "lng": 79.8612},
+            destination={"lat": 7.2906, "lng": 80.6337}
         )
 
     def test_create_shipment(self):
         payload = {
             "shipment_id": "SHIP999",
             "order_id": "ORD999",
-            "origin_warehouse_id": "WH010",
-            "destination_warehouse_id": "WH020"
+            "origin": {"lat": 6.9, "lng": 79.8},
+            "destination": {"lat": 7.2, "lng": 80.6}
         }
         response = self.client.post("/api/shipments/", payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -108,6 +109,6 @@ class ShipmentAPITestCase(TestCase):
             Shipment.objects.create(
                 shipment_id="SHIP123",
                 order_id="ORD999",
-                origin_warehouse_id="WHX",
-                destination_warehouse_id="WHY"
+                origin={"lat": 1.0, "lng": 2.0},
+                destination={"lat": 3.0, "lng": 4.0}
             )

@@ -14,8 +14,10 @@ class Shipment(models.Model):
 
     shipment_id = models.CharField(max_length=32, unique=True)
     order_id = models.CharField(max_length=32)  # Reference to order service
-    origin_warehouse_id = models.CharField(max_length=36)
-    destination_warehouse_id = models.CharField(max_length=36)
+
+    origin = models.JSONField()
+    destination = models.JSONField()
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     scheduled_dispatch = models.DateTimeField(null=True, blank=True)
     actual_dispatch = models.DateTimeField(null=True, blank=True)

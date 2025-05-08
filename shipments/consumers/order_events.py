@@ -1,9 +1,11 @@
 import json
 import logging
+import uuid
+
 from confluent_kafka import Consumer, KafkaException
 from django.conf import settings
 from shipments.models import Shipment
-import uuid
+
 
 def create_kafka_consumer():
     return Consumer({
@@ -12,22 +14,29 @@ def create_kafka_consumer():
         'auto.offset.reset': 'earliest',
     })
 
+
 def handle_order_created(event):
     order_id = event.get("order_id")
-    origin = event.get("origin_warehouse_id")
-    destination = event.get("destination_warehouse_id")
+    origin = event.get("origin")  # Expecting {"lat": ..., "lng": ...}
+    destination = event.get("destination")
 
-    if order_id and origin and destination:
-        Shipment.objects.create(
-            shipment_id=str(uuid.uuid4())[:12],
-            order_id=order_id,
-            origin_warehouse_id=origin,
-            destination_warehouse_id=destination,
-            status='pending'
-        )
-        logging.info(f"Shipment created for order {order_id}")
-    else:
+    if not (order_id and origin and destination):
         logging.error("Invalid order event payload")
+        return
+
+    if not all(k in origin for k in ("lat", "lng")) or not all(k in destination for k in ("lat", "lng")):
+        logging.error("Origin/destination must include lat/lng")
+        return
+
+    Shipment.objects.create(
+        shipment_id=str(uuid.uuid4())[:12],
+        order_id=order_id,
+        origin=origin,
+        destination=destination,
+        status='pending'
+    )
+    logging.info(f"Shipment created for order {order_id}")
+
 
 def start_order_consumer():
     consumer = create_kafka_consumer()
@@ -47,6 +56,7 @@ def start_order_consumer():
         print("Kafka consumer stopped")
     finally:
         consumer.close()
+
 
 def run_consumer_once():
     consumer = create_kafka_consumer()
