@@ -40,7 +40,12 @@ class AssignmentViewSet(viewsets.ModelViewSet):
         for delivery in deliveries:
             shipment_id = delivery.get("shipment_id")
             location = delivery.get("location")
-            sequence = delivery.get("sequence", 1)  # fallback if sequence not provided
+            sequence = delivery.get("sequence", 1)
+            role = delivery.get("role")
+
+            if role not in ["pickup", "delivery"]:
+                return Response({"error": f"Invalid role for shipment {shipment_id}. Must be 'pickup' or 'delivery'."},
+                                status=400)
 
             try:
                 shipment = Shipment.objects.get(id=shipment_id)
@@ -52,6 +57,7 @@ class AssignmentViewSet(viewsets.ModelViewSet):
                 shipment=shipment,
                 delivery_sequence=sequence,
                 delivery_location=location,
+                role=role
             )
 
         serializer = self.get_serializer(assignment)

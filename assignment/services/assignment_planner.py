@@ -86,7 +86,8 @@ class AssignmentPlanner:
                         delivery_location={
                             "lat": loc["lat"],
                             "lng": loc["lng"],
-                        }
+                        },
+                        role=role
                     )
                     seq += 1
 
