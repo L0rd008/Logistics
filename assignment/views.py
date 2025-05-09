@@ -1,11 +1,12 @@
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models.assignment import Assignment
 from .models.assignment_item import AssignmentItem
-from .serializers import AssignmentSerializer
 from fleet.models import Vehicle
 from shipments.models import Shipment
+from .serializers.assignment import AssignmentSerializer
 
 
 class AssignmentViewSet(viewsets.ModelViewSet):
@@ -62,3 +63,17 @@ class AssignmentViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(assignment)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["get"], url_path="by-vehicle/(?P<vehicle_id>[^/.]+)")
+    def by_vehicle(self, request, vehicle_id=None):
+        try:
+            vehicle = Vehicle.objects.get(vehicle_id=vehicle_id)
+        except Vehicle.DoesNotExist:
+            return Response({"error": "Vehicle not found"}, status=404)
+
+        assignment = Assignment.objects.filter(vehicle=vehicle).order_by('-id').first()
+        if not assignment:
+            return Response({"message": "No assignment found for this vehicle"}, status=404)
+
+        serializer = self.get_serializer(assignment)
+        return Response(serializer.data)
