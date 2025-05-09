@@ -1,10 +1,11 @@
+from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models.assignment import Assignment
 from .models.assignment_item import AssignmentItem
-from fleet.models import Vehicle
+from fleet.models import Vehicle, VehicleLocation
 from shipments.models import Shipment
 from .serializers.assignment import AssignmentSerializer
 
@@ -18,26 +19,20 @@ class AssignmentViewSet(viewsets.ModelViewSet):
         if not deliveries:
             return Response({"error": "Deliveries required"}, status=400)
 
-        # Calculate total load
         total_load = sum(d.get("load", 0) for d in deliveries)
-
-        # Find an available vehicle that can handle the load
         vehicle = Vehicle.objects.filter(status="available", capacity__gte=total_load).first()
         if not vehicle:
             return Response({"error": "No available vehicle for the load"}, status=400)
 
-        # Update vehicle status
         vehicle.status = "assigned"
         vehicle.save()
 
-        # Create Assignment
         assignment = Assignment.objects.create(
             vehicle=vehicle,
             total_load=total_load,
             status='created'
         )
 
-        # Create AssignmentItem entries
         for delivery in deliveries:
             shipment_id = delivery.get("shipment_id")
             location = delivery.get("location")
@@ -77,3 +72,51 @@ class AssignmentViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(assignment)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='arrive/sequence/(?P<sequence>[0-9]+)')
+    def mark_arrival(self, request, pk=None, sequence=None):
+        assignment = self.get_object()
+        vehicle = assignment.vehicle
+        sequence = int(sequence)
+
+        try:
+            current_item = assignment.items.get(delivery_sequence=sequence)
+        except AssignmentItem.DoesNotExist:
+            return Response({"error": f"No assignment item found at sequence {sequence}"}, status=404)
+
+        location = current_item.delivery_location
+        lat, lng = location.get("lat"), location.get("lng")
+
+        if lat is None or lng is None:
+            return Response({"error": "Location data is missing in assignment item"}, status=400)
+
+        vehicle.update_location(lat, lng)
+        VehicleLocation.objects.create(
+            vehicle=vehicle,
+            latitude=lat,
+            longitude=lng,
+        )
+
+        items_at_location = assignment.items.filter(
+            delivery_location=location,
+            delivery_sequence__gte=sequence
+        ).order_by("delivery_sequence")
+
+        grouped = [
+            {
+                "assignment_item_id": item.id,
+                "role": item.role,
+                "shipment_id": item.shipment.id,
+                "shipment_status": item.shipment.status,
+                "location": item.delivery_location,
+                "is_delivered": item.is_delivered
+            }
+            for item in items_at_location
+        ]
+
+        return Response({
+            "vehicle": vehicle.vehicle_id,
+            "arrived_at": timezone.now(),
+            "location": location,
+            "actions": grouped
+        })
