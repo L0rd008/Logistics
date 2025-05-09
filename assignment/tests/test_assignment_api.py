@@ -149,7 +149,6 @@ class AssignmentAPITests(APITestCase):
         # Call the arrival endpoint at sequence 2 (first of the two)
         arrive_url = f"/api/assignment/assignments/{assignment.pk}/arrive/sequence/2/"
         response = self.client.post(arrive_url, format="json")
-        print(response.data)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["location"], {"lat": 7.3, "lng": 80.2})
