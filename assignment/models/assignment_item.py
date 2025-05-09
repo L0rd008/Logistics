@@ -16,6 +16,7 @@ class AssignmentItem(models.Model):
 
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default="delivery")  # NEW
 
+    # TODO: rename these fields
     is_delivered = models.BooleanField(default=False)
     delivered_at = models.DateTimeField(null=True, blank=True)
 

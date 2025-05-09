@@ -120,3 +120,33 @@ class AssignmentViewSet(viewsets.ModelViewSet):
             "location": location,
             "actions": grouped
         })
+
+    @action(detail=True, methods=["post"], url_path="actions/(?P<item_id>[0-9]+)/complete")
+    def mark_action_complete(self, request, pk=None, item_id=None):
+        try:
+            assignment = self.get_object()
+            item = assignment.items.get(id=item_id)
+        except AssignmentItem.DoesNotExist:
+            return Response({"error": "Assignment item not found"}, status=404)
+
+        if item.is_delivered:
+            return Response({"message": "Already marked complete"}, status=200)
+
+        item.is_delivered = True
+        item.delivered_at = timezone.now()
+        item.save(update_fields=["is_delivered", "delivered_at"])
+
+        # Optional: update shipment status
+        if item.role == "delivery":
+            item.shipment.mark_delivered()
+        elif item.role == "pickup":
+            item.shipment.mark_dispatched()
+            item.shipment.mark_in_transit()
+        item.shipment.save()
+
+        return Response({
+            "message": f"{item.role.title()} confirmed",
+            "shipment_id": item.shipment.id,
+            "new_status": item.shipment.status,
+            "timestamp": item.delivered_at
+        }, status=200)
