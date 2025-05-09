@@ -44,9 +44,12 @@ INSTALLED_APPS = [
     'shipments',
     'drf_yasg',
     'route_optimizer',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -133,3 +136,7 @@ ENABLE_FLEET_EXTENDED_MODELS = False
 
 # kafka settings
 KAFKA_BROKER_URL = "localhost:9092"
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+]
