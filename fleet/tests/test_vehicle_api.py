@@ -98,3 +98,46 @@ class VehicleAPITest(TestCase):
         self.assertEqual(history.count(), 1)
         self.assertAlmostEqual(float(history[0].speed), 65.5)
         self.assertAlmostEqual(float(history[0].latitude), 42.123456)
+
+    def test_list_all_vehicles(self):
+        response = self.client.get("/api/fleet/vehicles/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
+
+    def test_filter_by_status(self):
+        response = self.client.get("/api/fleet/vehicles/?status=assigned")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['vehicle_id'], "TRK003")
+
+    def test_ordering_by_updated_at(self):
+        response = self.client.get("/api/fleet/vehicles/?ordering=-updated_at")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) >= 1)
+        self.assertIn('updated_at', response.data[0])
+
+    def test_mark_vehicle_available(self):
+        response = self.client.post(f"/api/fleet/vehicles/{self.vehicle3.id}/mark_available/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.vehicle3.refresh_from_db()
+        self.assertEqual(self.vehicle3.status, 'available')
+
+    def test_mark_vehicle_assigned(self):
+        response = self.client.post(f"/api/fleet/vehicles/{self.vehicle1.id}/mark_assigned/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.vehicle1.refresh_from_db()
+        self.assertEqual(self.vehicle1.status, 'assigned')
+
+    def test_change_status_to_available(self):
+        response = self.client.post(f"/api/fleet/vehicles/{self.vehicle2.id}/change_status/", {
+            "status": "available"
+        }, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.vehicle2.refresh_from_db()
+        self.assertEqual(self.vehicle2.status, "available")
+
+    def test_change_status_invalid(self):
+        response = self.client.post(f"/api/fleet/vehicles/{self.vehicle1.id}/change_status/", {
+            "status": "nonexistent"
+        }, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
