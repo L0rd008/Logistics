@@ -54,7 +54,7 @@ class AssignmentActionCompletionTests(APITestCase):
         )
 
     def test_confirm_delivery_action_successfully(self):
-        url = f"/api/assignment/assignments/{self.assignment.id}/actions/{self.delivery_item.id}/complete/"
+        url = f"/api/assignments/{self.assignment.id}/actions/{self.delivery_item.id}/complete/"
         response = self.client.post(url, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -66,7 +66,7 @@ class AssignmentActionCompletionTests(APITestCase):
         self.shipment.status = "scheduled"
         self.shipment.save()
 
-        url = f"/api/assignment/assignments/{self.assignment.id}/actions/{self.pickup_item.id}/complete/"
+        url = f"/api/assignments/{self.assignment.id}/actions/{self.pickup_item.id}/complete/"
         response = self.client.post(url, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -75,7 +75,7 @@ class AssignmentActionCompletionTests(APITestCase):
         self.assertEqual(response.data["new_status"], "in_transit")
 
     def test_confirm_action_invalid_assignment_item(self):
-        url = f"/api/assignment/assignments/{self.assignment.id}/actions/9999/complete/"
+        url = f"/api/assignments/{self.assignment.id}/actions/9999/complete/"
         response = self.client.post(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -84,7 +84,7 @@ class AssignmentActionCompletionTests(APITestCase):
         self.delivery_item.delivered_at = timezone.now()
         self.delivery_item.save()
 
-        url = f"/api/assignment/assignments/{self.assignment.id}/actions/{self.delivery_item.id}/complete/"
+        url = f"/api/assignments/{self.assignment.id}/actions/{self.delivery_item.id}/complete/"
         response = self.client.post(url, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -102,7 +102,7 @@ class AssignmentAPITests(APITestCase):
         )
 
         # arrive_url = reverse("assignment-arrive-sequence", kwargs={"pk": assignment.pk, "sequence": 2})
-        arrive_url = f"/api/assignment/assignments/{assignment.pk}/arrive/sequence/2/"
+        arrive_url = f"/api/assignments/{assignment.pk}/arrive/sequence/2/"
         response = self.client.post(arrive_url, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -147,7 +147,7 @@ class AssignmentAPITests(APITestCase):
         )
 
         # Call the arrival endpoint at sequence 2 (first of the two)
-        arrive_url = f"/api/assignment/assignments/{assignment.pk}/arrive/sequence/2/"
+        arrive_url = f"/api/assignments/{assignment.pk}/arrive/sequence/2/"
         response = self.client.post(arrive_url, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
