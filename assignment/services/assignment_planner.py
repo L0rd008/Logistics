@@ -54,7 +54,7 @@ class AssignmentPlanner:
             logger.error("Optimizer failed to find a solution.")
             raise Exception("Optimization failed")
 
-        # Implicit mapping of vehicle in this and vehichle in vrp solver
+        # Implicit mapping of vehicle in this and vehicle in vrp solver
         assignments = []
         for i, route in enumerate(result["routes"]):
             vehicle = self.vehicles[i]
