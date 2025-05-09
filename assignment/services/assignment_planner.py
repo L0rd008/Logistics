@@ -54,6 +54,7 @@ class AssignmentPlanner:
             logger.error("Optimizer failed to find a solution.")
             raise Exception("Optimization failed")
 
+        # Implicit mapping of vehicle in this and vehichle in vrp solver
         assignments = []
         for i, route in enumerate(result["routes"]):
             vehicle = self.vehicles[i]
@@ -65,6 +66,10 @@ class AssignmentPlanner:
                 ),
                 status='created'
             )
+
+            # Update vehicle status, not using methods in the vehicle model but ORM directly
+            vehicle.status = "assigned"
+            vehicle.save(update_fields=["status"])
 
             seq = 1
             for node in route:
