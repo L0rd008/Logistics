@@ -135,7 +135,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ENABLE_FLEET_EXTENDED_MODELS = False
 
 # kafka settings
-KAFKA_BROKER_URL = "localhost:9092"
+import os
+
+KAFKA_BROKER_URL = os.getenv("KAFKA_BROKER_URL", "localhost:9092")
+
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
