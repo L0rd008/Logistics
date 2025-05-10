@@ -47,6 +47,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install --no-cache-dir -r requirements.txt
 
+    - name: Wait for Kafka to be ready
+      run: |
+        for i in {1..10}; do
+          kafka-topics --bootstrap-server kafka:9092 --list && break
+          echo "Waiting for Kafka..."
+          sleep 5
+        done
+
     - name: Run Django tests (including Kafka)
       run: |
         python manage.py test
