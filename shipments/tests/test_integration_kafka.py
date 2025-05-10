@@ -4,6 +4,7 @@ from django.test import TestCase
 from shipments.models import Shipment
 from confluent_kafka import Producer
 from shipments.consumers.order_events import run_consumer_once
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ class KafkaE2ETest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.producer = Producer({'bootstrap.servers': 'localhost:9092'})
+        cls.producer = Producer({'bootstrap.servers': settings.KAFKA_BROKER_URL})
 
     def test_order_event_creates_shipment(self):
         order_id = "KAFKA_E2E_01"
