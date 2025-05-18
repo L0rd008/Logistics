@@ -1,93 +1,88 @@
-# 🚚 Logistics Microservice Suite
+# Logistics
 
-This service powers intelligent shipment routing, assignment, fleet matching, and delivery monitoring — driven by Kafka and Django.
+- route_optimizer/ (Standalone service)
+  - Inputs: delivery locations, vehicle capacities
+  - Output: optimized delivery route
+  - Purpose: The brain of the logistics module
+  - Develop this first so you can test assignment logic early
+ 
+- map_service/ (Optional)
+  - Utility/service to fetch real-world distances
+  - Can be a local function or API-based (OpenRouteService / OpenStreetMap)
+  - Can be skipped initially, use dummy distance matrix
+ 
+- fleet/ (Django app)
+  - Models: Vehicle, Status, Capacity, Location
+  - REST APIs to get available vehicles, update location/status
+  - You’ll need this to match vehicles with optimized route
+ 
+- assignment/ (Django app)
+  - Inputs: optimized route + available vehicles (from fleet)
+  - Logic: assign deliveries to vehicle
+  - Output: assignment events, persisted records
+  - Triggers optimizer and manages dispatching
+ 
+- scheduler/ (Lambda or Celery)
+  - Automatically triggers assignment + route_optimizer daily/hourly
+  - Optional for early dev, but crucial for automation
+ 
+- monitoring/ (Django app)
+  - Captures logs, alerts, failed deliveries, delays
+  - Optional dashboard with charts and status
+  - Could connect with Kafka or DB log events from assignment
+- shipments/ (Django app) 
+  - Models: Shipment (order_id, origin, destination, status)
+  - Status Lifecycle: pending → scheduled → dispatched → in_transit → delivered/failed
+  - APIs: Create shipment, update status, track delivery progress
+  - Decoupled from Warehouse via primitive IDs (warehouse_id)
+  - Triggered by Order events (async/REST), manages physical movement of goods
 
 ---
-
-## 📦 Modules Overview
-
-- **route_optimizer/**: Optimizes delivery routes (independent service)
-- **fleet/**: Manages vehicle data and availability
-- **assignment/**: Assigns optimized routes to vehicles
-- **scheduler/**: Triggers assignment logic periodically (future: Celery/Lambda)
-- **monitoring/**: Logs delivery issues, performance (optional)
-- **shipments/**: Manages shipment lifecycle
-- **map_service/** *(optional)*: Calculates real-world distances via OpenRouteService or dummy matrix
-
-## 🚀 Getting Started
-
-### 🐳 Option A: Run with Docker (Recommended)
-
-#### 1. Clone the Repo
+# Getting Started
+### 1. ✅ Clone the Repository
 
 ```bash
 git clone https://github.com/IASSCMS/Logistics.git
 cd Logistics
-````
-
-#### 2. Create `.env` File
-
-```env
-# .env
-DJANGO_PORT=8000
-KAFKA_BROKER_URL=kafka:9092
-LOGISTICS_SERVICE_PORT=8002
-```
-
-#### 3. Start All Services
-
-```bash
-docker-compose up --build
-```
-
-This spins up:
-
-* Django app
-* Kafka + Zookeeper
-
-#### 4. Visit in Browser
-
-* Swagger docs: [http://localhost:8002/swagger/](http://localhost:8002/swagger/)
-* Admin panel: [http://localhost:8002/admin/](http://localhost:8002/admin/)
-
-#### 5. Run Django Tests in Docker
-
-```bash
-docker-compose run --rm logistics-service python manage.py test
 ```
 
 ---
 
-### 🐍 Option B: Local Dev Setup (Without Docker)
+### 2. 🐍 Create & Activate Virtual Environment
 
-#### 1. Create & Activate Virtual Environment
-
+#### On Linux/macOS:
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate
 ```
 
-#### 2. Install Dependencies
+#### On Windows:
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+---
+
+### 3. 📦 Install Dependencies
+
+Make sure your virtual environment is activated, then run:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 3. Setup Environment
+---
 
-Set these in `.env` or shell:
-
-```env
-KAFKA_BROKER_URL=localhost:9092
-```
-
-#### 4. Run Migrations
+### 4. ⚙️ Apply Migrations
 
 ```bash
 python manage.py migrate
 ```
 
-#### 5. Start Django Server
+---
+
+### 5. 🚦 Run the Development Server
 
 ```bash
 python manage.py runserver
@@ -95,56 +90,177 @@ python manage.py runserver
 
 ---
 
-## 📬 Kafka Setup Notes
+### 6. 📚 View API Documentation (Swagger)
 
-This app connects to Kafka topic `orders.created` via `kafka-python`.
-Kafka is provided via `confluentinc/cp-kafka` in `docker-compose.yml`.
-
-* Send test events using `publish_mock_event.py`
-* Consumer listens via `shipments.consumers.order_events`
-
----
-
-## 📂 Project Structure
+Once the server is running, open your browser and go to:
 
 ```
-logistics/
-├── logistics_core/       # Django project
-├── fleet/                # Vehicle models & APIs
-├── shipments/            # Shipment status, tracking
-├── assignment/           # Route-to-vehicle mapping
-├── monitoring/           # Logs, dashboard, alerts
-├── route_optimizer/      # Standalone optimization engine
-├── manage.py
-├── Dockerfile
-├── entrypoint.sh
-├── docker-compose.yml
-└── requirements.txt
+http://127.0.0.1:8000/swagger/
 ```
 
----
+You’ll see an interactive **Swagger UI** listing all available API endpoints (e.g., `/api/fleet/vehicles/`).
 
-## 📄 API Documentation
-
-Once server is running:
-
-* Swagger UI: [http://localhost:8002/swagger/](http://localhost:8002/swagger/)
-* Redoc: [http://localhost:8002/redoc/](http://localhost:8002/redoc/)
-
----
-
-## 🔐 Admin Account
-
-Create one manually:
-
-```bash
-python manage.py createsuperuser
 ```
+Logistics
+├─ .pytest_cache
+│  ├─ CACHEDIR.TAG
+│  ├─ README.md
+│  └─ v
+│     └─ cache
+│        ├─ lastfailed
+│        ├─ nodeids
+│        └─ stepwise
+├─ assignment
+│  ├─ admin.py
+│  ├─ apps.py
+│  ├─ migrations
+│  │  ├─ 0001_initial.py
+│  │  └─ __init__.py
+│  ├─ models.py
+│  ├─ serializers.py
+│  ├─ tests.py
+│  ├─ urls.py
+│  ├─ views.py
+│  └─ __init__.py
+├─ docker-compose.yml
+├─ fleet
+│  ├─ admin.py
+│  ├─ apps.py
+│  ├─ migrations
+│  │  ├─ 0001_initial.py
+│  │  ├─ 0002_vehicle_created_at_vehicle_current_latitude_and_more.py
+│  │  ├─ 0003_remove_fuelrecord_vehicle_and_more.py
+│  │  └─ __init__.py
+│  ├─ models
+│  │  ├─ core.py
+│  │  ├─ extended_models.py
+│  │  └─ __init__.py
+│  ├─ serializers
+│  │  ├─ fuel.py
+│  │  ├─ maintenance.py
+│  │  ├─ trip.py
+│  │  ├─ vehicle.py
+│  │  └─ __init__.py
+│  ├─ tests
+│  │  ├─ test_fuel.py
+│  │  ├─ test_fuel_api.py
+│  │  ├─ test_maintenance.py
+│  │  ├─ test_maintenance_api.py
+│  │  ├─ test_trip.py
+│  │  ├─ test_trip_api.py
+│  │  ├─ test_vehicle.py
+│  │  ├─ test_vehicle_api.py
+│  │  └─ __init__.py
+│  ├─ urls.py
+│  ├─ views
+│  │  ├─ fuel.py
+│  │  ├─ maintenance.py
+│  │  ├─ trip.py
+│  │  ├─ vehicle.py
+│  │  └─ __init__.py
+│  └─ __init__.py
+├─ LICENSE
+├─ logistics_core
+│  ├─ asgi.py
+│  ├─ settings.py
+│  ├─ urls.py
+│  ├─ wsgi.py
+│  └─ __init__.py
+├─ manage.py
+├─ monitoring
+│  ├─ admin.py
+│  ├─ apps.py
+│  ├─ migrations
+│  │  └─ __init__.py
+│  ├─ models.py
+│  ├─ tests.py
+│  ├─ views.py
+│  └─ __init__.py
+├─ order_simulator.py
+├─ README.md
+├─ requirements.txt
+├─ route_optimizer
+│  ├─ admin.py
+│  ├─ api
+│  │  ├─ serializers.py
+│  │  ├─ urls.py
+│  │  ├─ views.py
+│  │  └─ __init__.py
+│  ├─ apps.py
+│  ├─ core
+│  │  ├─ constants.py
+│  │  ├─ dijkstra.py
+│  │  ├─ distance_matrix.py
+│  │  ├─ ortools_optimizer.py
+│  │  ├─ types_1.py
+│  │  └─ __init__.py
+│  ├─ migrations
+│  │  ├─ 0001_initial.py
+│  │  └─ __init__.py
+│  ├─ models.py
+│  ├─ README.md
+│  ├─ services
+│  │  ├─ depot_service.py
+│  │  ├─ external_data_service.py
+│  │  ├─ optimization_service.py
+│  │  ├─ path_annotation_service.py
+│  │  ├─ rerouting_service.py
+│  │  ├─ route_stats_service.py
+│  │  ├─ traffic_service.py
+│  │  └─ __init__.py
+│  ├─ settings.py
+│  ├─ tests
+│  │  ├─ api
+│  │  │  ├─ test_serializers.py
+│  │  │  └─ test_views.py
+│  │  ├─ conftest.py
+│  │  ├─ core
+│  │  │  ├─ test_dijkstra.py
+│  │  │  ├─ test_distance_matrix.py
+│  │  │  ├─ test_ortools_optimizer.py
+│  │  │  ├─ test_types.py
+│  │  │  └─ __init__.py
+│  │  ├─ services
+│  │  │  ├─ test_depot_service.py
+│  │  │  ├─ test_external_data_service.py
+│  │  │  ├─ test_optimization_service.py
+│  │  │  ├─ test_path_annotation_service.py
+│  │  │  ├─ test_rerouting_service.py
+│  │  │  ├─ test_route_stats_service.py
+│  │  │  ├─ test_traffic_service.py
+│  │  │  └─ __init__.py
+│  │  ├─ test_models.py
+│  │  ├─ test_settings.py
+│  │  ├─ utils
+│  │  │  ├─ test_env_loader.py
+│  │  │  └─ test_helpers.py
+│  │  └─ __init__.py
+│  ├─ utils
+│  │  ├─ env_loader.py
+│  │  ├─ helpers.py
+│  │  └─ __init__.py
+│  ├─ views.py
+│  └─ __init__.py
+└─ shipments
+   ├─ admin.py
+   ├─ apps.py
+   ├─ consumers
+   │  └─ order_events.py
+   ├─ management
+   │  └─ commands
+   │     └─ consume_orders.py
+   ├─ migrations
+   │  ├─ 0001_initial.py
+   │  └─ __init__.py
+   ├─ models.py
+   ├─ serializers.py
+   ├─ tests
+   │  ├─ test_api.py
+   │  ├─ test_consumer.py
+   │  ├─ test_integration_kafka.py
+   │  └─ __init__.py
+   ├─ urls.py
+   ├─ views.py
+   └─ __init__.py
 
-Or inside Docker:
-
-```bash
-docker-compose exec logistics-service python manage.py createsuperuser
 ```
-
----
