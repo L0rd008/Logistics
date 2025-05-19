@@ -36,7 +36,7 @@ urlpatterns = [
     path('api/route_optimizer/', include('route_optimizer.api.urls')),
     path('api/ro/', include('route_optimizer.api.urls')), 
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    path('api/assignment/', include('assignment.urls')),
+    path('api/assignments/', include('assignment.urls')),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/shipments/', include('shipments.urls')),

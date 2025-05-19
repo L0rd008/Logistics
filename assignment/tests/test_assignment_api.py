@@ -167,7 +167,7 @@ class AssignmentAPITests(APITestCase):
             total_load=500,
             status="created"
         )
-        # arrive_url = reverse("assignment-arrive-sequence", kwargs={"pk": assignment.pk, "sequence": 99})
-        arrive_url = f"/api/assignment/assignments/{assignment.pk}/arrive/sequence/99/"
+        # Corrected URL
+        arrive_url = f"/api/assignments/{assignment.pk}/arrive/sequence/99/" 
         response = self.client.post(arrive_url, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
