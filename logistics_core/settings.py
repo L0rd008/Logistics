@@ -17,29 +17,18 @@ from pathlib import Path
 # --- Environment Variable Loading (Should be at the top) ---
 # Attempt to load environment variables from a .env file (commonly used pattern)
 # You might need to install python-dotenv: pip install python-dotenv
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 try:
     from dotenv import load_dotenv
-    # Determine the base directory of the project (where manage.py typically is)
-    # This is usually one level up from where settings.py is (BASE_DIR.parent)
-    # or two levels up if settings.py is in a subdirectory of the project root.
-    # Adjust as per your project structure for env_var.env or .env file location.
     
-    # Assuming env_var.env is in the same directory as manage.py (BASE_DIR.parent)
-    # If your BASE_DIR is logistics_core/logistics_core, then BASE_DIR.parent is logistics_core/
-    # If env_var.env is in the root (logistics_core/), then use:
-    env_path = Path(__file__).resolve().parent.parent.parent / 'env_var.env' 
-                                                                    # (adjust if settings.py is not in project_root/project_config_dir/)
-    
-    # Or if route_optimizer.utils.env_loader is preferred and already handles paths well:
-    # from route_optimizer.utils.env_loader import load_env_from_file
-    # env_paths_to_try = [
-    #     Path(__file__).resolve().parent.parent / 'env_var.env', # Project root if settings.py is in config_dir
-    #     Path(__file__).resolve().parent.parent.parent / 'env_var.env' # One level above project root if settings.py is in project_root/config_dir/
-    # ]
-    # for path in env_paths_to_try:
-    #     if path.exists():
-    #         load_env_from_file(path) # Assuming this function now just loads and doesn't define Django settings
-    #         break
+    # Correct path assuming env_var.env is in the project root directory (M:\Documents\Logistics)
+    # BASE_DIR is M:\Documents\Logistics
+    env_path = BASE_DIR / 'env_var.env' 
+    # Alternatively:
+    # env_path = Path(__file__).resolve().parent.parent / 'env_var.env'
 
     if env_path.exists():
         load_dotenv(dotenv_path=env_path)
@@ -50,12 +39,8 @@ try:
 except ImportError:
     logging.warning("python-dotenv is not installed. Relying on system environment variables.")
     pass
+
 # --- End Environment Variable Loading ---
-
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-default-key-for-dev-only') # Provide a default for local dev if not set
@@ -86,7 +71,6 @@ INSTALLED_APPS = [
     'monitoring',
     'shipments',
     'route_optimizer', # Ensure route_optimizer is here
-    'shipments',
     'corsheaders',
     'django_filters'
 ]
@@ -121,38 +105,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'logistics_core.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-# For production, use environment variables for database credentials.
-# Example for PostgreSQL:
-# DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.sqlite3')
-# DB_NAME = os.getenv('DB_NAME', BASE_DIR / 'db.sqlite3')
-# DB_USER = os.getenv('DB_USER')
-# DB_PASSWORD = os.getenv('DB_PASSWORD')
-# DB_HOST = os.getenv('DB_HOST')
-# DB_PORT = os.getenv('DB_PORT')
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': DB_ENGINE,
-#         'NAME': DB_NAME,
-#         'USER': DB_USER,
-#         'PASSWORD': DB_PASSWORD,
-#         'HOST': DB_HOST,
-#         'PORT': DB_PORT,
-#     }
-# }
-# If DB_ENGINE is sqlite3, some fields like USER, PASSWORD, HOST, PORT might not be needed or empty.
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -212,6 +164,52 @@ CORS_ALLOWED_ORIGINS = [
 # Determine if we're in test mode (important for logic below)
 # This is a common way to detect if `manage.py test` or `pytest` is running.
 TESTING = 'test' in sys.argv or 'pytest' in sys.modules # Pytest check might need adjustment based on how it's run.
+
+# Database
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# For production, use environment variables for database credentials.
+# Example for PostgreSQL:
+# DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.sqlite3')
+# DB_NAME = os.getenv('DB_NAME', BASE_DIR / 'db.sqlite3')
+# DB_USER = os.getenv('DB_USER')
+# DB_PASSWORD = os.getenv('DB_PASSWORD')
+# DB_HOST = os.getenv('DB_HOST')
+# DB_PORT = os.getenv('DB_PORT')
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': DB_ENGINE,
+#         'NAME': DB_NAME,
+#         'USER': DB_USER,
+#         'PASSWORD': DB_PASSWORD,
+#         'HOST': DB_HOST,
+#         'PORT': DB_PORT,
+#     }
+# }
+# If DB_ENGINE is sqlite3, some fields like USER, PASSWORD, HOST, PORT might not be needed or empty.
+
+if TESTING:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',  # Use in-memory SQLite for tests
+        }
+    }
+    # You might want to set other test-specific settings here,
+    # e.g., disable DEBUG, use dummy cache, etc.
+    # DEBUG = False # Usually good for tests
+    # CACHES = {
+    #     'default': {
+    #         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    #     }
+    # }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3', # Your regular development database
+        }
+    }
 
 # Google Maps API configuration
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')

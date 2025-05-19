@@ -9,7 +9,7 @@ from route_optimizer.models import Vehicle, Delivery # Assuming these are datacl
 class OptimizeRoutesViewTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.optimize_url = reverse('optimize_routes_create') # Matches operation_id in OptimizeRoutesView
+        self.optimize_url = reverse('route_optimizer:optimize_routes_create') # Matches operation_id in OptimizeRoutesView
 
         # Sample data for requests
         self.location_data1 = {"id": "depot", "name": "Depot XYZ", "latitude": 34.0522, "longitude": -118.2437, "is_depot": True}
@@ -18,11 +18,10 @@ class OptimizeRoutesViewTests(APITestCase):
         self.delivery_data1 = {"id": "delivery1", "location_id": "customer1", "demand": 10.0}
 
         self.valid_request_data = {
-            "locations": [self.location_data1, self.location_data2],
-            "vehicles": [self.vehicle_data1],
-            "deliveries": [self.delivery_data1],
-            "consider_traffic": False,
-            "consider_time_windows": False
+            "locations": [{"id": "depot", "name": "Depot", "latitude": 0.0, "longitude": 0.0, "is_depot": True}, 
+                          {"id": "customer1", "name": "Customer 1", "latitude": 1.0, "longitude": 1.0}],
+            "vehicles": [{"id": "vehicle1", "capacity": 10.0, "start_location_id": "depot", "max_distance": 500}],
+            "deliveries": [{"id": "delivery1", "location_id": "customer1", "demand": 1.0}]
         }
         
         # Sample successful OptimizationResult DTO (as would be returned by the service)
@@ -147,7 +146,7 @@ class OptimizeRoutesViewTests(APITestCase):
 class RerouteViewTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.reroute_url = reverse('reroute_vehicles_update') # Matches operation_id in RerouteView
+        self.reroute_url = reverse('route_optimizer:reroute_vehicles_update') # Matches operation_id in RerouteView
 
         self.location_data1 = {"id": "depot", "name": "Main Depot", "latitude": 34.0522, "longitude": -118.2437, "is_depot": True}
         self.location_data2 = {"id": "customer1", "name": "Client One", "latitude": 34.0523, "longitude": -118.2438}
@@ -278,7 +277,7 @@ class RerouteViewTests(APITestCase):
 class HealthCheckViewTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.health_url = reverse('health_check_get') # Matches operation_id for health_check
+        self.health_url = reverse('route_optimizer:health_check_get') # Matches operation_id for health_check
 
     def test_health_check(self):
         response = self.client.get(self.health_url)
